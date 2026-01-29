@@ -7,7 +7,7 @@ from ui.data_bridge import (
     start_capture,
     get_summary,
     get_risk_flows,
-    get_topology
+    get_communication_matrix
 )
 
 # ---------------- PAGE CONFIG ----------------
@@ -24,7 +24,7 @@ if "capture_started" not in st.session_state:
 # ---------------- LIVE REFRESH (NO BLINK) ----------------
 st_autorefresh(interval=2000, key="live_refresh")
 
-# ---------------- FORCE DARK / CYBER THEME ----------------
+# ---------------- CYBER DARK THEME ----------------
 st.markdown("""
 <style>
 html, body, [class*="css"]  {
@@ -36,7 +36,6 @@ html, body, [class*="css"]  {
     padding-top: 2rem;
 }
 
-/* Cards */
 .card {
     background-color: #111827;
     padding: 1.3rem;
@@ -45,7 +44,6 @@ html, body, [class*="css"]  {
     box-shadow: 0 0 0 1px rgba(34,197,94,0.08);
 }
 
-/* Metrics */
 .metric {
     font-size: 30px;
     font-weight: 800;
@@ -57,7 +55,6 @@ html, body, [class*="css"]  {
     font-size: 14px;
 }
 
-/* Section titles */
 .section-title {
     font-size: 22px;
     font-weight: 800;
@@ -65,17 +62,9 @@ html, body, [class*="css"]  {
     margin-bottom: 0.6rem;
 }
 
-/* Tables */
 .stDataFrame {
     background-color: #111827;
     border-radius: 10px;
-}
-
-/* Alerts */
-.stAlert {
-    background-color: #0F172A !important;
-    color: #93C5FD !important;
-    border: 1px solid #1E3A8A;
 }
 
 footer {
@@ -158,7 +147,7 @@ else:
         else:
             confidence = "Low confidence anomaly"
 
-        with st.expander(f"{flow['src']} → {flow['dst']}  |  Risk {risk_pct}%"):
+        with st.expander(f"{flow['src']} → {flow['dst']} | Risk {risk_pct}%"):
             col1, col2 = st.columns([1, 2])
 
             with col1:
@@ -174,19 +163,25 @@ else:
 
 st.divider()
 
-# ---------------- TOPOLOGY SUMMARY (NO BLINK) ----------------
+# ---------------- COMMUNICATION MATRIX ----------------
 st.markdown(
-    '<div class="section-title">Network Topology (Summary)</div>',
+    '<div class="section-title">Network Communication Matrix</div>',
     unsafe_allow_html=True
 )
 
-topo = get_topology()
+matrix = get_communication_matrix()
 
-st.markdown(f"""
-<div class="card">
-<b>Nodes:</b> {len(topo["nodes"])}<br>
-<b>Flows:</b> {len(topo["edges"])}
-</div>
-""", unsafe_allow_html=True)
+if not matrix:
+    st.info("No active communications yet.")
+else:
+    df = pd.DataFrame(matrix)
 
-st.caption("Topology visualization will be enhanced in the next iteration.")
+    st.dataframe(
+        df,
+        use_container_width=True,
+        height=420
+    )
+
+    st.caption(
+        "Summarizes dominant communication pairs with packet volume, duration, and risk score."
+    )

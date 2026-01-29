@@ -79,3 +79,23 @@ def get_topology():
     )
 
     return topology.export()
+
+def get_communication_matrix(limit=20):
+    flows = list(flow_tracker.get_flows())
+    rows = []
+
+    for f in flows:
+        risk, _ = risk_engine.compute_risk(f)
+
+        rows.append({
+            "Source": f.key[0],
+            "Destination": f.key[1],
+            "Protocol": f.key[4],
+            "Packets": f.packet_count,
+            "Duration (s)": round(f.duration(), 2),
+            "Risk": round(risk * 100, 1)
+        })
+
+    rows.sort(key=lambda x: x["Packets"], reverse=True)
+    return rows[:limit]
+
